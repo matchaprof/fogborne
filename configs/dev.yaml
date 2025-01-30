@@ -1,0 +1,15 @@
+game:
+  tickRate: 20 # How many times per second the game updates
+  serverConfig:
+    port: 8080
+  mapSize:
+    width: 80 # Initial map width
+    height: 24 # Initial map height
+
+logging:
+  # Options: trace, debug, info, warn, error, fatal, panic
+  level: "debug"
+  # Options: text, json
+  format: "text"
+  # Options: true, false
+  reportCaller: true
