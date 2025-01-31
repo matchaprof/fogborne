@@ -47,6 +47,13 @@ func main() {
 		"port":       SERVER_PORT,
 	}).Info(" .•( Game Configuration Initialized )•.")
 
+	// Creating test map
+	logging.WithFields(logrus.Fields{
+		"map_width":  MAP_WIDTH,
+		"map_height": MAP_HEIGHT,
+	}).Infof(" .•( Map Settings being used by NewGameMap %dx%d )•.", MAP_WIDTH, MAP_HEIGHT)
+	gameMap := render.NewGameMap(MAP_WIDTH, MAP_HEIGHT)
+
 	// Checking player's terminal size
 	termWidth, termHeight, err := terminal.GetTerminalSize()
 	if err != nil {
@@ -58,23 +65,19 @@ func main() {
 	offsetX := (termWidth - MAP_WIDTH) / 2
 	offsetY := (termHeight - MAP_HEIGHT) / 2
 	if offsetX < 0 || offsetY < 0 {
-		MAP_HEIGHT = termHeight
-		logging.Logger.Infof("MAP_WIDTH is now %d and MAP_HEIGHT is now %d", MAP_WIDTH, MAP_HEIGHT)
+		MAP_WIDTH = termWidth - 1
+		MAP_HEIGHT = termHeight - 1
 	}
-
-	// Creating test map
-	logging.Logger.Debugf("Width and Height for the GameMap is %dx%d", MAP_WIDTH, MAP_HEIGHT)
-	gameMap := render.NewGameMap(MAP_WIDTH, MAP_HEIGHT)
 
 	// Add walls
 	for x := 0; x < MAP_WIDTH; x++ {
 		gameMap.Tiles[0][x] = render.CeilingTile
-		gameMap.Tiles[MAP_WIDTH-1][x] = render.LowerTile
+		gameMap.Tiles[gameMap.Height-1][x] = render.LowerTile
 	}
 
 	for y := 0; y < MAP_HEIGHT; y++ {
 		gameMap.Tiles[y][0] = render.WallTile
-		gameMap.Tiles[y][MAP_HEIGHT-1] = render.WallTile
+		gameMap.Tiles[y][gameMap.Width-1] = render.WallTile
 	}
 
 	// Draw the map

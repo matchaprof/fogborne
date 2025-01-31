@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/matchaprof/fogborne/internal/core/logging"
+	"github.com/sirupsen/logrus"
 	"golang.org/x/term"
 )
 
@@ -15,6 +16,10 @@ func GetTerminalSize() (width, height int, err error) {
 	}
 
 	width, height, err = term.GetSize(int(os.Stdin.Fd()))
-	logging.Logger.Infof("Player's Terminal Size is %dx%d", width, height)
+	logging.WithFields(logrus.Fields{
+		"term_width":  width,
+		"term_height": height,
+	}).Infof(" .•( Player's Terminal Size %dx%d )•.", width, height)
+
 	return width, height, err
 }
