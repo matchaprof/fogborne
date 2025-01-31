@@ -3,9 +3,12 @@ package logging
 import (
 	"fmt"
 	"os"
+	"sort"
 	"strings"
+	"sync/atomic"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/matchaprof/fogborne/internal/core/config"
 	"github.com/sirupsen/logrus"
 )
@@ -13,16 +16,81 @@ import (
 // Logger is the global logger instance
 var Logger *logrus.Logger
 
+var requestCounter atomic.Uint64
+
+// ContextualEntry assists in tracing related logs across a single transaction
+type SessionContext struct {
+	SessionID  string    // Unique ID for a player's session
+	ActionID   string    // ID for a specific game action
+	PlayerID   string    // Tracking the player involved
+	ActionType string    // Type of action being performed
+	StartTime  time.Time // When this context was created
+}
+
+func (sc *SessionContext) String() string {
+	duration := time.Since(sc.StartTime).Round(time.Millisecond)
+
+	var parts []string
+
+	// Only include fields that are set
+	if sc.SessionID != "" {
+		parts = append(parts, fmt.Sprintf("sid:%s", sc.SessionID))
+	}
+	if sc.PlayerID != "" {
+		parts = append(parts, fmt.Sprintf("pid:%s", sc.PlayerID))
+	}
+	if sc.ActionType != "" {
+		parts = append(parts, fmt.Sprintf("type:%s", sc.ActionType))
+	}
+
+	// Always include duration last
+	parts = append(parts, fmt.Sprintf("dur:%v", duration))
+
+	return strings.Join(parts, " ¤ ")
+}
+
 // CustomFormatter defines how we want the logs to look
 type CustomFormatter struct {
 	TimestampFormat string // sets Timestampformat to use Go's time formatting
 	ShowFullPath    bool   // This setting determines whether the logger shows the full filepath or just filename
+	// startTime       time.Time // This setting will help in tracking performance issues
+	ColorizeContext bool // Option to colorize the context differently
 }
 
 const (
 	logSeparator  = "►►►"
-	fileInfoWidth = 26
+	fileInfoWidth = 27
+	colorReset    = "\033[0m"
 )
+
+// InitLogger initializes the logging system with the provided configuration
+func InitLogger(cfg *config.LoggingConfig) error {
+	Logger = logrus.New()
+
+	customFormatter := &CustomFormatter{
+		TimestampFormat: "2006-01-02 ¤ 15:04:05",
+		ShowFullPath:    false,
+	}
+
+	// Set the formatter
+	Logger.SetFormatter(customFormatter)
+
+	// Set output to stdout
+	Logger.SetOutput(os.Stdout)
+
+	// Set logging level
+	level, err := logrus.ParseLevel(cfg.Level)
+	if err != nil {
+		return fmt.Errorf("invalid log level: %w", err)
+	}
+
+	Logger.SetLevel(level)
+
+	// Sets report caller information based on config
+	Logger.SetReportCaller(cfg.ReportCaller)
+
+	return nil
+}
 
 // Format implements the logrus.Formatter interface
 func (f *CustomFormatter) Format(entry *logrus.Entry) ([]byte, error) {
@@ -84,7 +152,6 @@ func (f *CustomFormatter) Format(entry *logrus.Entry) ([]byte, error) {
 	case logrus.ErrorLevel, logrus.FatalLevel, logrus.PanicLevel:
 		colorCode = "\033[31m" // Red
 	}
-	colorReset := "\033[0m"
 
 	// Format the timestamp
 	timestamp := entry.Time.Format(f.TimestampFormat)
@@ -111,11 +178,22 @@ func (f *CustomFormatter) Format(entry *logrus.Entry) ([]byte, error) {
 	// Add colored separator and file info
 	if fileInfo != "" {
 		// Add separator with same color as log level
-		sb.WriteString(fmt.Sprintf(" %s%s%s %s %s%s  %s ",
+		sb.WriteString(fmt.Sprintf(" %s%s%s %s %s%s%s",
 			colorCode, logSeparator, colorReset,
 			fileInfo,
 			colorCode, logSeparator, colorReset))
 	}
+
+	reqID := requestCounter.Add(1) // Thread-safe counter
+	// duration := time.Since(f.startTime)
+	contextOutput := fmt.Sprintf("txn:%d", reqID)
+
+	contextInfo := fmt.Sprintf(" (%s%s%s) ",
+		colorCode,
+		contextOutput,
+		colorReset)
+
+	sb.WriteString(contextInfo)
 
 	// Add the log message
 	sb.WriteString(entry.Message)
@@ -124,13 +202,22 @@ func (f *CustomFormatter) Format(entry *logrus.Entry) ([]byte, error) {
 	if len(entry.Data) > 0 {
 		sb.WriteString(fmt.Sprintf(" %s►%s [", colorCode, colorReset))
 
+		// Retrieving the keys and sorting alphabetically
+		keys := make([]string, 0, len(entry.Data))
+		for k := range entry.Data {
+			keys = append(keys, k)
+		}
+
+		sort.Strings(keys)
+
 		first := true
-		for k, v := range entry.Data {
+		for _, k := range keys {
 			if !first {
 				// Seperator between pairs
 				sb.WriteString(fmt.Sprintf(" %s¤ ", colorReset))
 			}
 
+			v := entry.Data[k]
 			valueColor := getValueColor(v)
 			formattedValue := formatValue(v)
 
@@ -147,35 +234,6 @@ func (f *CustomFormatter) Format(entry *logrus.Entry) ([]byte, error) {
 
 	sb.WriteString("\n")
 	return []byte(sb.String()), nil
-}
-
-// InitLogger initializes the logging system with the provided configuration
-func InitLogger(cfg *config.LoggingConfig) error {
-	Logger = logrus.New()
-
-	customFormatter := &CustomFormatter{
-		TimestampFormat: "2006-01-02 ¤ 15:04:05",
-		ShowFullPath:    false,
-	}
-
-	// Set the formatter
-	Logger.SetFormatter(customFormatter)
-
-	// Set output to stdout
-	Logger.SetOutput(os.Stdout)
-
-	// Set logging level
-	level, err := logrus.ParseLevel(cfg.Level)
-	if err != nil {
-		return fmt.Errorf("invalid log level: %w", err)
-	}
-
-	Logger.SetLevel(level)
-
-	// Sets report caller information based on config
-	Logger.SetReportCaller(cfg.ReportCaller)
-
-	return nil
 }
 
 /*
@@ -239,6 +297,8 @@ func LogSection(title string, logFn LogFunc) {
 		return
 	}
 
+	// colorCode :=
+
 	width := 80
 	line := strings.Repeat("-", width)
 	logFn(fmt.Sprint(line))
@@ -270,6 +330,30 @@ func WithFields(fields logrus.Fields) *logrus.Entry {
 	return Logger.WithFields(fields)
 }
 
+func WithCorrelationID(id string) *logrus.Entry {
+	return Logger.WithField("correlation_id", id)
+}
+
+// StartPlayerSession creates a new session context
+func StartPlayerSession(playerID string) *SessionContext {
+	return &SessionContext{
+		SessionID: uuid.New().String(), // Generate unique session ID
+		PlayerID:  playerID,
+		StartTime: time.Now(),
+	}
+}
+
+// StartGameAction adds action context to an existing session
+func (sc *SessionContext) StartGameAction(actionType string) *SessionContext {
+	return &SessionContext{
+		SessionID:  sc.SessionID,        // Keep the same session ID
+		ActionID:   uuid.New().String(), // New action ID
+		StartTime:  time.Now(),
+		PlayerID:   sc.PlayerID,
+		ActionType: actionType,
+	}
+}
+
 // Methods that mirror logrus's logging levels
 func Debug(args ...interface{}) {
 	Logger.Debug(args...)
@@ -290,9 +374,3 @@ func Error(args ...interface{}) {
 func Fatal(args ...interface{}) {
 	Logger.Fatal(args...)
 }
-
-// Timestamp
-// Log level
-// Component name
-// Message
-// Any relevant context

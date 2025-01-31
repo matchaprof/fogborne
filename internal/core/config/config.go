@@ -16,9 +16,12 @@ type Config struct {
 }
 
 type LoggingConfig struct {
-	Level        string `yaml:"level"`
-	Format       string `yaml:"format"`
-	ReportCaller bool   `yaml:"reportCaller"`
+	Level           string   `yaml:"level"`
+	Format          string   `yaml:"format"`
+	ReportCaller    bool     `yaml:"reportCaller"`
+	ShowContext     bool     `yaml:"showContext"`
+	ColorizeContext bool     `yaml:"colorizeContext"`
+	ContextFields   []string `yaml:"contextFields"`
 }
 
 // GameConfig holds game-specific settings
