@@ -1,15 +1,15 @@
 Project Structure
 fogborne/
-├── cmd/					                  # Application entry points
-│   ├── server/				            # Main game server (WebSocket/HTTP)
+├── cmd/					# Application entry points
+│   ├── server/				# Main game server (WebSocket/HTTP)
 │   │   └── main.go              
-│   └── sshserver/				         # SSH interface server
+│   └── sshserver/				# SSH interface server
 │       └── main.go              
 │
-├── internal/				               # Private application code
+├── internal/				# Private application code
 │   ├── game/
-│   │   ├── world/				         # World and map management
-│   │   │   ├── ziglib/			         # Zig-based map generation
+│   │   ├── world/				# World and map management
+│   │   │   ├── ziglib/			# Zig-based map generation
 │   │   │   │   ├── src/
 │   │   │   │   │   ├── generator.zig	# Main generation logic
 │   │   │   │   │   ├── noise.zig		# Noise algorithms for terrain
@@ -17,90 +17,90 @@ fogborne/
 │   │   │   │   │   └── build.zig		# Zig build configuration
 │   │   │   │   └── include/
 │   │   │   │       └── generator.h		# C headers for Go/Zig interop
-│   │   │   ├── map.go			         # Map data structures and methods
-│   │   │   ├── generation.go		      # Go interface to Zig generation
-│   │   │   └── zone.go			         # Zone/instance management
-│   │   ├── entity/			            # Game entities
+│   │   │   ├── map.go			# Map data structures and methods
+│   │   │   ├── generation.go		# Go interface to Zig generation
+│   │   │   └── zone.go			# Zone/instance management
+│   │   ├── entity/			# Game entities
 │   │   │   ├── player.go
 │   │   │   ├── npc.go
-│   │   │   └── state.go			      # Shared entity state
-│   │   ├── systems/			            # Game mechanics
+│   │   │   └── state.go			# Shared entity state
+│   │   ├── systems/			# Game mechanics
 │   │   │   ├── combat.go
 │   │   │   ├── inventory.go
-│   │   │   └── fov.go			         # Field of view/fog of war
-│   │   └── game.go			            # Core game loop and orchestration
+│   │   │   └── fov.go			# Field of view/fog of war
+│   │   └── game.go			# Core game loop and orchestration
 │   │
-│   ├── net/				               # Networking
+│   ├── net/				# Networking
 │   │   ├── websocket/
-│   │   │   ├── hub.go			         # Connection management
-│   │   │   ├── client.go			      # Individual client handling
-│   │   │   └── handlers.go		      # WebSocket message handlers
+│   │   │   ├── hub.go			# Connection management
+│   │   │   ├── client.go			# Individual client handling
+│   │   │   └── handlers.go		# WebSocket message handlers
 │   │   ├── ssh/
-│   │   │   ├── server.go			      # SSH server setup
-│   │   │   └── session.go		         # SSH session management
+│   │   │   ├── server.go			# SSH server setup
+│   │   │   └── session.go		# SSH session management
 │   │   └── api/
-│   │       └── http.go			         # HTTP endpoints
+│   │       └── http.go			# HTTP endpoints
 │   │
-│   ├── render/				            # ASCII rendering
+│   ├── render/				# ASCII rendering
 │   │   ├── ascii/
-│   │   │   ├── renderer.go		      # Core rendering logic
-│   │   │   └── particles.go		      # Particle effect rendering
+│   │   │   ├── renderer.go		# Core rendering logic
+│   │   │   └── particles.go		# Particle effect rendering
 │   │   ├── camera/
-│   │   │   └── viewport.go		      # View management
-│   │   └── engine.go			         # Render orchestration
+│   │   │   └── viewport.go		# View management
+│   │   └── engine.go			# Render orchestration
 │   │
-│   ├── storage/				            # Data persistence
+│   ├── storage/				# Data persistence
 │   │   ├── db/
-│   │   │   ├── connection.go		      # Database connection management
-│   │   │   └── migrations/		      # Schema migrations
+│   │   │   ├── connection.go		# Database connection management
+│   │   │   └── migrations/		# Schema migrations
 │   │   ├── cache/              
-│   │   │   ├── client.go			      # Cache client setup
-│   │   │   └── store.go			      # Cache operations
-│   │   └── repository/			         # Data access layer
+│   │   │   ├── client.go			# Cache client setup
+│   │   │   └── store.go			# Cache operations
+│   │   └── repository/			# Data access layer
 │   │       ├── player.go
 │   │       └── world.go
 │   │
-│   └── core/				               # Core services
+│   └── core/				# Core services
 │       ├── config/
-│       │   └── config.go			      # Configuration management
+│       │   └── config.go			# Configuration management
 │       ├── events/
-│       │   └── bus.go			         # Event system
+│       │   └── bus.go			# Event system
 │       └── logging/
-│           └── logger.go			      # Logging service
+│           └── logger.go			# Logging service
 │
-├── web/					                  # Web client
-│   ├── public/				            # Static assets
+├── web/					# Web client
+│   ├── public/				# Static assets
 │   │   ├── images/
 │   │   └── fonts/
-│   ├── src/				               # Client-side code
+│   ├── src/				# Client-side code
 │   │   ├── components/
-│   │   │   ├── game.js			         # Main game component
-│   │   │   └── chat.js			         # Chat interface
+│   │   │   ├── game.js			# Main game component
+│   │   │   └── chat.js			# Chat interface
 │   │   ├── styles/
 │   │   │   └── main.css
 │   │   └── app.js
 │   └── index.html
 │
-├── scripts/				               # Development and deployment scripts
+├── scripts/				# Development and deployment scripts
 │   ├── build/
-│   │   └── build.sh			            # Build script
+│   │   └── build.sh			# Build script
 │   └── dev/
-│       └── run.sh				         # Development runner
+│       └── run.sh				# Development runner
 │
-├── docs/					               # Documentation
-│   ├── api/				               # API documentation
-│   └── development/			            # Development guides
+├── docs/					# Documentation
+│   ├── api/				# API documentation
+│   └── development/			# Development guides
 │
-├── configs/				               # Configuration files
+├── configs/				# Configuration files
 │   ├── development.yaml
 │   └── production.yaml
 │
-├── deployments/				            # Deployment configurations
+├── deployments/				# Deployment configurations
 │   └── docker/
 │       ├── Dockerfile
 │       └── docker-compose.yml
 │
-├── test/					               # Integration and E2E tests
+├── test/					# Integration and E2E tests
 │   ├── integration/
 │   └── e2e/
 │
