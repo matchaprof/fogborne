@@ -39,8 +39,11 @@ func NewGameMap(width, height int) *GameMap {
 	}
 }
 
-func (m *GameMap) Draw() {
+func (m *GameMap) Draw(offsetX, offsetY int) {
 	for y := 0; y < m.Height; y++ {
+		for i := 0; i < offsetX; i++ {
+			fmt.Print(" ")
+		}
 		for x := 0; x < m.Width; x++ {
 			fmt.Print(string(m.Tiles[y][x]))
 		}
