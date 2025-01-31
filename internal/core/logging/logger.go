@@ -5,10 +5,8 @@ import (
 	"os"
 	"sort"
 	"strings"
-	"sync/atomic"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/matchaprof/fogborne/internal/core/config"
 	"github.com/sirupsen/logrus"
 )
@@ -16,7 +14,8 @@ import (
 // Logger is the global logger instance
 var Logger *logrus.Logger
 
-var requestCounter atomic.Uint64
+//todo rethink transaction tracking
+// var requestCounter atomic.Uint64
 
 // ContextualEntry assists in tracing related logs across a single transaction
 type SessionContext struct {
@@ -178,22 +177,23 @@ func (f *CustomFormatter) Format(entry *logrus.Entry) ([]byte, error) {
 	// Add colored separator and file info
 	if fileInfo != "" {
 		// Add separator with same color as log level
-		sb.WriteString(fmt.Sprintf(" %s%s%s %s %s%s%s",
+		sb.WriteString(fmt.Sprintf(" %s%s%s %s %s%s%s ",
 			colorCode, logSeparator, colorReset,
 			fileInfo,
 			colorCode, logSeparator, colorReset))
 	}
 
-	reqID := requestCounter.Add(1) // Thread-safe counter
+	//TODO redo this useless request counter
+	// reqID := requestCounter.Add(1) // Thread-safe counter
 	// duration := time.Since(f.startTime)
-	contextOutput := fmt.Sprintf("txn:%d", reqID)
+	// contextOutput := fmt.Sprintf("req:%d", reqID)
 
-	contextInfo := fmt.Sprintf(" (%s%s%s) ",
-		colorCode,
-		contextOutput,
-		colorReset)
+	// contextInfo := fmt.Sprintf(" (%s%s%s) ",
+	// 	colorCode,
+	// 	contextOutput,
+	// 	colorReset)
 
-	sb.WriteString(contextInfo)
+	// sb.WriteString(contextInfo)
 
 	// Add the log message
 	sb.WriteString(entry.Message)
@@ -283,12 +283,13 @@ type LogFunc func(args ...interface{})
 type LogfFunc func(format string, args ...interface{})
 
 // LogTitle creates a visual separation in logs for titles
+// TODO Center the title along a width line of 80
 func LogTitle(title string, logFn LogFunc) {
 	if Logger == nil {
 		return
 	}
 
-	logFn(fmt.Sprintf("               [ %s ] ", title))
+	logFn(fmt.Sprintf("          .•( %s )•. ", title))
 }
 
 // LogSection creates a visual separation in logs for different sections
@@ -297,12 +298,10 @@ func LogSection(title string, logFn LogFunc) {
 		return
 	}
 
-	// colorCode :=
-
 	width := 80
-	line := strings.Repeat("-", width)
+	line := strings.Repeat("—", width)
 	logFn(fmt.Sprint(line))
-	logFn(fmt.Sprintf("                    [ %s ]", title))
+	logFn(fmt.Sprintf("                   .•( %s )•.", title))
 	logFn(fmt.Sprint(line))
 }
 
@@ -312,7 +311,7 @@ func LogSubSection(title string, logFn LogFunc) {
 		return
 	}
 
-	logFn(fmt.Sprintf("[ -- %s -- ]", title))
+	logFn(fmt.Sprintf(" .•( %s )•. ", title))
 }
 
 /*
@@ -334,25 +333,25 @@ func WithCorrelationID(id string) *logrus.Entry {
 	return Logger.WithField("correlation_id", id)
 }
 
-// StartPlayerSession creates a new session context
-func StartPlayerSession(playerID string) *SessionContext {
-	return &SessionContext{
-		SessionID: uuid.New().String(), // Generate unique session ID
-		PlayerID:  playerID,
-		StartTime: time.Now(),
-	}
-}
+// // StartPlayerSession creates a new session context
+// func StartPlayerSession(playerID string) *SessionContext {
+// 	return &SessionContext{
+// 		SessionID: uuid.New().String(), // Generate unique session ID
+// 		PlayerID:  playerID,
+// 		StartTime: time.Now(),
+// 	}
+// }
 
-// StartGameAction adds action context to an existing session
-func (sc *SessionContext) StartGameAction(actionType string) *SessionContext {
-	return &SessionContext{
-		SessionID:  sc.SessionID,        // Keep the same session ID
-		ActionID:   uuid.New().String(), // New action ID
-		StartTime:  time.Now(),
-		PlayerID:   sc.PlayerID,
-		ActionType: actionType,
-	}
-}
+// // StartGameAction adds action context to an existing session
+// func (sc *SessionContext) StartGameAction(actionType string) *SessionContext {
+// 	return &SessionContext{
+// 		SessionID:  sc.SessionID,        // Keep the same session ID
+// 		ActionID:   uuid.New().String(), // New action ID
+// 		StartTime:  time.Now(),
+// 		PlayerID:   sc.PlayerID,
+// 		ActionType: actionType,
+// 	}
+// }
 
 // Methods that mirror logrus's logging levels
 func Debug(args ...interface{}) {
