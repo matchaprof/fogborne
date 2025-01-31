@@ -6,6 +6,7 @@ import (
 	"github.com/matchaprof/fogborne/internal/core/config"
 	"github.com/matchaprof/fogborne/internal/core/logging"
 	render "github.com/matchaprof/fogborne/internal/render/ascii"
+	"github.com/matchaprof/fogborne/internal/terminal"
 	"github.com/sirupsen/logrus"
 )
 
@@ -46,20 +47,36 @@ func main() {
 		"port":       SERVER_PORT,
 	}).Info(" .•( Game Configuration Initialized )•.")
 
+	// Checking player's terminal size
+	termWidth, termHeight, err := terminal.GetTerminalSize()
+	if err != nil {
+		logging.Logger.Error("Error detecting terminal size\n")
+		return
+	}
+
+	// Calculate offset in order to center the map in the player's terminal
+	offsetX := (termWidth - MAP_WIDTH) / 2
+	offsetY := (termHeight - MAP_HEIGHT) / 2
+	if offsetX < 0 || offsetY < 0 {
+		MAP_HEIGHT = termHeight
+		logging.Logger.Infof("MAP_WIDTH is now %d and MAP_HEIGHT is now %d", MAP_WIDTH, MAP_HEIGHT)
+	}
+
 	// Creating test map
+	logging.Logger.Debugf("Width and Height for the GameMap is %dx%d", MAP_WIDTH, MAP_HEIGHT)
 	gameMap := render.NewGameMap(MAP_WIDTH, MAP_HEIGHT)
 
 	// Add walls
 	for x := 0; x < MAP_WIDTH; x++ {
 		gameMap.Tiles[0][x] = render.CeilingTile
-		gameMap.Tiles[gameMap.Height-1][x] = render.LowerTile
+		gameMap.Tiles[MAP_WIDTH-1][x] = render.LowerTile
 	}
 
 	for y := 0; y < MAP_HEIGHT; y++ {
 		gameMap.Tiles[y][0] = render.WallTile
-		gameMap.Tiles[y][gameMap.Width-1] = render.WallTile
+		gameMap.Tiles[y][MAP_HEIGHT-1] = render.WallTile
 	}
 
 	// Draw the map
-	gameMap.Draw()
+	gameMap.Draw(offsetX, offsetY)
 }
