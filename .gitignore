@@ -5,4 +5,4 @@ deployments/
 *.env
 env/
 *.png
-*.txt
+# *.txt
