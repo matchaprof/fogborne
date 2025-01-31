@@ -58,7 +58,7 @@ type CustomFormatter struct {
 
 const (
 	logSeparator  = "►►►"
-	fileInfoWidth = 27
+	fileInfoWidth = 22
 	colorReset    = "\033[0m"
 )
 
@@ -95,12 +95,12 @@ func InitLogger(cfg *config.LoggingConfig) error {
 func (f *CustomFormatter) Format(entry *logrus.Entry) ([]byte, error) {
 	var fileInfo string
 	if entry.HasCaller() {
-		// If ShowFullPath is false, just use the last three parts of the path
-		// (e.g., "core/logging/logging.go" instead of full path to logger.go)
+		// If ShowFullPath is false, just use the last two parts of the path
+		// (e.g., "logging/logging.go" instead of full path to logger.go)
 		if !f.ShowFullPath {
 			parts := strings.Split(entry.Caller.File, "/")
 			if len(parts) > 2 {
-				fileInfo = strings.Join(parts[len(parts)-3:], "/")
+				fileInfo = strings.Join(parts[len(parts)-2:], "/")
 			} else {
 				fileInfo = entry.Caller.File
 			}
