@@ -5,6 +5,7 @@ import (
 
 	"github.com/matchaprof/fogborne/internal/core/config"
 	"github.com/matchaprof/fogborne/internal/core/logging"
+	render "github.com/matchaprof/fogborne/internal/render/ascii"
 	"github.com/sirupsen/logrus"
 )
 
@@ -29,12 +30,36 @@ func main() {
 
 	logging.LogSection("Fogborne Server Initialization", logging.Logger.Info)
 
+	var (
+		MAP_WIDTH   = cfg.Game.MapSize.Width
+		MAP_HEIGHT  = cfg.Game.MapSize.Height
+		TICK_RATE   = cfg.Game.TickRate
+		SERVER_PORT = cfg.Game.ServerConfig.Port
+	)
+
 	// Testing logger
 	logging.LogSubSection("Configuration Loaded", logging.Logger.Info)
 	logging.WithFields(logrus.Fields{
-		"map_width":  cfg.Game.MapSize.Width,
-		"map_height": cfg.Game.MapSize.Height,
-		"tick_rate":  cfg.Game.TickRate,
-		"port":       cfg.Game.ServerConfig.Port,
+		"map_width":  MAP_WIDTH,
+		"map_height": MAP_HEIGHT,
+		"tick_rate":  TICK_RATE,
+		"port":       SERVER_PORT,
 	}).Info(" .•( Game Configuration Initialized )•.")
+
+	// Creating test map
+	gameMap := render.NewGameMap(MAP_WIDTH, MAP_HEIGHT)
+
+	// Add walls
+	for x := 0; x < MAP_WIDTH; x++ {
+		gameMap.Tiles[0][x] = render.CeilingTile
+		gameMap.Tiles[gameMap.Height-1][x] = render.LowerTile
+	}
+
+	for y := 0; y < MAP_HEIGHT; y++ {
+		gameMap.Tiles[y][0] = render.WallTile
+		gameMap.Tiles[y][gameMap.Width-1] = render.WallTile
+	}
+
+	// Draw the map
+	gameMap.Draw()
 }

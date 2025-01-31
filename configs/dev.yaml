@@ -3,8 +3,8 @@ game:
   serverConfig:
     port: 8080
   mapSize:
-    width: 80 # Initial map width
-    height: 24 # Initial map height
+    width: 200 # Initial map width
+    height: 60 # Initial map height
 
 logging:
   # Options: trace, debug, info, warn, error, fatal, panic
